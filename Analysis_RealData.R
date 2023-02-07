@@ -37,7 +37,7 @@ if(downloadData){
 #----------------------------#
 
 ## Set localities/areas and time period of interest
-localities <- listLocations()
+#localities <- listLocations()
 areas <- listAreas()
 minYear <- 2007
 maxYear <- 2021
@@ -46,11 +46,11 @@ maxYear <- 2021
 duplTransects <- listDuplTransects()
 
 ## Extract transect and observational data from DwC archive
-LT_data <- wrangleData_LineTrans(DwC_archive_list = Rype_arkiv, 
+LT_data <- wrangleData_LineTrans(DwC_archive_list = Rype_arkiv,
                                  duplTransects = duplTransects,
-                                 localities = localities,
-                                 #areas = areas,
-                                 areaAggregation = FALSE,
+                                 #localities = localities,
+                                 areas = areas,
+                                 areaAggregation = TRUE,
                                  minYear = minYear, maxYear = maxYear)
 
 
@@ -68,9 +68,9 @@ d_cmr <- wrangleData_CMR(minYear = minYear)
 input_data <- prepareInputData(d_trans = LT_data$d_trans, 
                                d_obs = LT_data$d_obs,
                                d_cmr = d_cmr,
-                               localities = localities, 
-                               #areas = areas,
-                               areaAggregation = FALSE,
+                               #localities = localities,
+                               areas = areas,
+                               areaAggregation = TRUE,
                                excl_neverObs = TRUE,
                                dataVSconstants = TRUE,
                                save = TRUE)
@@ -79,13 +79,6 @@ input_data <- prepareInputData(d_trans = LT_data$d_trans,
 # MODEL SETUP #
 #-------------#
 
-# Original version (zeroes-trick)
-# model_setup <- setupModel(modelCode.path = "NIMBLE Code/RypeIDSM.R",
-#                           customDist = FALSE,
-#                           nim.data = input_data$nim.data,
-#                           nim.constants = input_data$nim.constants,
-#                           testRun = FALSE, initVals.seed = 0)
-  
 # Updated version (nimbleDistance::dHN)
 model_setup <- setupModel(modelCode.path = "NIMBLE Code/RypeIDSM_multiArea_dHN.R",
                           customDist = TRUE,
@@ -94,13 +87,6 @@ model_setup <- setupModel(modelCode.path = "NIMBLE Code/RypeIDSM_multiArea_dHN.R
                           testRun = TRUE, nchains = 3,
                           initVals.seed = 0)
 
-# Updated version (nimbleDistance::dHR)
-# NOTE: This does not work properly yet (calculation of esw likely needs adjusting)
-# model_setup <- setupModel(modelCode.path = "NIMBLE Code/RypeIDSM_dHR.R",
-#                           customDist = TRUE,
-#                           nim.data = input_data$nim.data, 
-#                           nim.constants = input_data$nim.constants,
-#                           testRun = FALSE, initVals.seed = 0)
 
 # MODEL (TEST) RUN #
 #------------------#
@@ -118,27 +104,31 @@ IDSM.out <- nimbleMCMC(code = model_setup$modelCode,
                        setSeed = 0)
 #Sys.time() - t.start
 
-saveRDS(IDSM.out, file = 'rypeIDSM_dHN_multiArea_realData_Lierne.rds')
+saveRDS(IDSM.out, file = 'rypeIDSM_dHN_multiArea_realData.rds')
 
 
-# OPTIONAL: MCMC TRACE PLOTS #
-#----------------------------#
+# TIDY POSTERIOR SAMPLES #
+#------------------------#
 
-MCMCvis::MCMCtrace(IDSM.out,
-                   params = c("esw", "p", "D",
-                              "R_year", "mu.R", "h.mu.R", "h.sigma.R", "sigmaT.R",
-                              "sigma", "mu.dd", "sigma.dd",
-                              "Mu.D1", "sigma.D",
-                              "Mu.S1", "Mu.S2", "h.Mu.S1", "h.Mu.S2", "h.sigma.S1", "h.sigma.S2",
-                              "ratio.JA1"))
+IDSM.out.tidy <- tidySamples(IDSM.out = IDSM.out,
+                             save = TRUE)
+rm(IDSM.out)
 
 
-# OPTIONAL: MODEL COMPARISON (PLOTS) #
-#------------------------------------#
+# MCMC TRACE PLOTS #
+#------------------#
 
-# modelComp <- plotModelComparison(modelPaths = c("rypeIDSM_realData_Lierne.rds", 
-#                                                 "rypeIDSM_dHN_realData_Lierne.rds"), 
-#                                  modelChars = c("Zeroes trick", "dHN"), 
-#                                  N_sites = 58, N_years = 6,
-#                                  plotPath = "Plots/ModelCompTest",
-#                                  returnData = FALSE)
+plotMCMCTraces(mcmc.out = IDSM.out.tidy)
+
+
+# TIME SERIES PLOTS #
+#-------------------#
+
+plotTimeSeries(mcmc.out = IDSM.out.tidy, 
+               N_areas = input_data$nim.constant$N_areas, 
+               area_names = input_data$nim.constant$area_names, 
+               N_sites = input_data$nim.constant$N_sites, 
+               min_years = input_data$nim.constant$min_years, 
+               max_years = input_data$nim.constant$max_years, 
+               minYear = minYear, maxYear = maxYear,
+               VitalRates = TRUE, DetectParams = TRUE, Densities = TRUE)
