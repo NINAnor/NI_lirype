@@ -167,15 +167,15 @@ rypeIDSM <- nimbleCode({
     
   }
   
-  S1[1:N_years] <- Mu.S1
-  S2[1:N_years] <- S[SurvAreaIdx, 1:N_years]/S1[1:N_years]
-  
-  ## Data likelihoods
-  for (t in 1:N_years_RT){
+  if (survVarT) {
+    S1[1:N_years] <- Mu.S1
+    S2[1:N_years] <- S[SurvAreaIdx, 1:N_years] / S1[1:N_years]
     
-    Survs1[t, 2] ~ dbinom(S1[year_Survs[t]], Survs1[t, 1])
-    Survs2[t, 2] ~ dbinom(S2[year_Survs[t]], Survs2[t, 1])
-    
+    ## Data likelihoods
+    for (t in 1:N_years_RT) {
+      Survs1[t, 2] ~ dbinom(S1[year_Survs[t]], Survs1[t, 1])
+      Survs2[t, 2] ~ dbinom(S2[year_Survs[t]], Survs2[t, 1])
+    }
   }
   
   
@@ -183,24 +183,26 @@ rypeIDSM <- nimbleCode({
   ### Model for year 2 - n.years; 
   ### post-breeding census
   
-  for(x in 1:N_areas){
-    for(j in 1:N_sites[x]){
-      for(t in 2:N_years){
-        
+  for (x in 1:N_areas) {
+    for (j in 1:N_sites[x]) {
+      for (t in 2:N_years) {
         ## Process model
-        Density[x, 2, j, t] <- sum(Density[x, 1:N_ageC, j, t-1])*S[x, t-1] # Adults
+        Density[x, 2, j, t] <-
+          sum(Density[x, 1:N_ageC, j, t - 1]) * S[x, t - 1] # Adults
         
-        if(R_perF){
-          Density[x, 1, j, t] <- (Density[x, 2, j, t]/2)*R_year[x, t] # Juveniles 
-        }else{
-          Density[x, 1, j, t] <- Density[x, 2, j, t]*R_year[x, t] # Juveniles
+        if (R_perF) {
+          Density[x, 1, j, t] <-
+            (Density[x, 2, j, t] / 2) * R_year[x, t] # Juveniles
+        } else {
+          Density[x, 1, j, t] <- Density[x, 2, j, t] * R_year[x, t] # Juveniles
         }
         
-        N_exp[x, 1:N_ageC, j, t] <- Density[x, 1:N_ageC, j, t]*L[x, j, t]*W*2
+        N_exp[x, 1:N_ageC, j, t] <-
+          Density[x, 1:N_ageC, j, t] * L[x, j, t] * W * 2
         
         ## Detection model year 2 - T
-        for(a in 1:N_ageC){
-          N_a_line_year[x, a, j, t] ~ dpois(p[x, t]*N_exp[x, a, j, t])
+        for (a in 1:N_ageC) {
+          N_a_line_year[x, a, j, t] ~ dpois(p[x, t] * N_exp[x, a, j, t])
         }
         
         #N_line_year[x, j, t] ~ dpois(p[x, t]*sum(N_exp[x, 1:N_ageC, j, t]))
@@ -215,8 +217,8 @@ rypeIDSM <- nimbleCode({
   
   ####################################################
   ### Derived parameters; Nt and Dt
-  for(x in 1:N_areas){
-    for (t in 1:N_years){
+  for (x in 1:N_areas) {
+    for (t in 1:N_years) {
       N_tot_exp[x, t] <- sum(N_exp[x, 1, 1:N_sites[x], t] + N_exp[x, 2, 1:N_sites[x], t])    ## Summing up expected number of birds in covered area; 
       #D[x, t] <- N_tot_exp[x, t] / A[x, t]       ## Deriving density as N/A     
     }

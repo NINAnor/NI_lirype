@@ -7,6 +7,8 @@ library(ggplot2)
 library(LivingNorwayR)
 library(rgdal)
 library(rgeos)
+library(sf)
+library(reshape2)
 library(maptools)
 library(tmap)
 
@@ -28,12 +30,15 @@ maxYear <- 2021
 
 ## Set model toggles
 areaAggregation <- TRUE # Area- vs. locality aggregation
+counties2020 <- FALSE #pre- (FALSE; default NI) or post- (TRUE) 2020 counties
 R_perF <- FALSE # Recruitment per adult or per adult female
 R_parent_drop0 <- TRUE # Drop observations of juveniles with no adults present
 sumR.Level <- "line" # Aggregation level for reproduction data (line vs. group)
-shareRE <- FALSE # Random effects shared across areas
-survVarT <- TRUE # Time variation in survival
-fitRodentCov <- TRUE # Rodent covariate on reproduction
+shareRE <- TRUE # Random effects shared across areas
+survVarT <- FALSE # Time variation in survival
+fitRodentCov <- FALSE # Rodent covariate on reproduction
+species <- c("Lagopus lagopus") # For downloading / uploading indicator values
+indicators <- c("Lirype") # For download / uploading indicator values
 
 
 ## Set target-specific options such as packages.
@@ -65,13 +70,26 @@ list(
   ),
   
   tar_target(
-    LT_data,
+    counties,
+    listCounties()
+  ),
+  
+  tar_target(
+    LT_data_orig,
     wrangleData_LineTrans(DwC_archive_list = Rype_arkiv,
                           duplTransects = duplTransects,
                           #localities = localities,
                           areas = areas,
                           areaAggregation = areaAggregation,
-                          minYear = minYear, maxYear = maxYear)
+                          minYear = minYear,
+                          maxYear = maxYear)
+  ),
+  
+  tar_target(
+    LT_data,
+    assignCounty(LT_data_orig,
+                 counties = counties,
+                 counties2020 = counties2020)
   ),
   
   tar_target(
@@ -84,7 +102,7 @@ list(
     wrangleData_Rodent(duplTransects = duplTransects,
                        #localities = localities,
                        areas = areas,
-                       areaAggregation = TRUE,
+                       areaAggregation = areaAggregation,
                        minYear = minYear, maxYear = maxYear)
   ),
   
@@ -92,11 +110,12 @@ list(
     input_data,
     prepareInputData(d_trans = LT_data$d_trans, 
                      d_obs = LT_data$d_obs,
-                     d_cmr = d_cmr,
-                     d_rodent = d_rodent,
+                     d_cmr = NULL,
+                     d_rodent = NULL,
                      #localities = localities,
-                     areas = areas,
+                     #areas = areas,
                      areaAggregation = areaAggregation,
+                     countyAggregation = TRUE,
                      excl_neverObs = TRUE,
                      R_perF = R_perF,
                      R_parent_drop0 = R_parent_drop0,
@@ -106,22 +125,23 @@ list(
   ),
   
   tar_target(
-    modelCode.path,
+    code.path,
     selectCodePath(shareRE = shareRE,
                    survVarT = survVarT)
   ),
   
   tar_target(
     model_setup,
-    setupModel(modelCode.path = "NIMBLE code/rypeIDSM_multiArea_dHN_sepRE_survT.R",
+    setupModel(modelCode.path = "NIMBLE code/rypeIDSM_multiArea_dHN.R",
                customDist = TRUE,
-               R_perF = R_perF,
                nim.data = input_data$nim.data,
                nim.constants = input_data$nim.constants,
+               R_perF = R_perF,
                shareRE = shareRE,
                survVarT = survVarT,
                fitRodentCov = fitRodentCov,
-               testRun = TRUE, nchains = 3,
+               testRun = TRUE,
+               nchains = 3,
                initVals.seed = 0)
   ),
   
@@ -147,6 +167,46 @@ list(
   ),
   
   tar_target(
+    prepared.output,
+    prepareOutputNI(mcmc.out = IDSM.out.tidy,
+                    N_areas = input_data$nim.constant$N_areas,
+                    area_names = input_data$nim.constant$area_names,
+                    N_sites = input_data$nim.constant$N_sites,
+                    min_years = input_data$nim.constant$min_years,
+                    max_years = input_data$nim.constant$max_years,
+                    minYear = minYear,
+                    maxYear = maxYear)
+  ),
+  
+  tar_target(
+    output.data,
+    estimatePtarmiganAbundance(output = prepared.output)
+  ),
+  
+  tar_target(
+    currentPtarmTable,
+    downloadData_NIdb(species,
+                      indicators,
+                      save = T,
+                      save_path = "data")
+  ),
+  
+  tar_target(
+    newPtarmTable,
+    updateNItable(model.est = output.data,
+                  cur.table = currentPtarmTable,
+                  save = T,
+                  save_path = "data",
+                  min_year = NULL,
+                  max_year = NULL)
+  ),
+  
+  # tar_target(
+  #   uploadData_NI,
+  #   uploadData_NIdb(species, data_path = "data")
+  # ),
+  
+  tar_target(
     mcmc.tracePlots,
     plotMCMCTraces(mcmc.out = IDSM.out.tidy,
                    fitRodentCov = fitRodentCov),
@@ -161,17 +221,21 @@ list(
                    N_sites = input_data$nim.constant$N_sites, 
                    min_years = input_data$nim.constant$min_years, 
                    max_years = input_data$nim.constant$max_years, 
-                   minYear = minYear, maxYear = maxYear,
-                   VitalRates = TRUE, DetectParams = TRUE, Densities = TRUE),
+                   minYear = minYear,
+                   maxYear = maxYear,
+                   VitalRates = TRUE,
+                   DetectParams = TRUE,
+                   Densities = TRUE,
+                   survVarT = survVarT),
     format = "file"
   ),
   
-  tar_target(
-    NorwayMunic.map,
-    setupMap_NorwayMunic(shp.path = "data/Kommuner_2018_WGS84/Kommuner_2018_WGS84.shp",
-                        d_trans = LT_data$d_trans,
-                        areas = areas, areaAggregation = areaAggregation)
-  ),
+  # tar_target(
+  #   NorwayMunic.map,
+  #   setupMap_NorwayMunic(shp.path = "data/Kommuner_2018_WGS84/Kommuner_2018_WGS84.shp",
+  #                       d_trans = LT_data$d_trans,
+  #                       areas = areas, areaAggregation = areaAggregation)
+  # ),
   
   tar_target(
     post.densPlots,

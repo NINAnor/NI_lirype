@@ -7,14 +7,17 @@
 #' in the data and are not estimated in the model. The function identifies these
 #' nodes by the presence of NAs / only zeros in the posterior samples. 
 #'
-#' @param IDSM.out an MCMC list containing posterior samples for one or more chains from a fitted multi-area model.
+#' @param IDSM.out an MCMC list containing posterior samples for one or more
+#' chains from a fitted multi-area model.
 #' @param save logical. If TRUE (default), saves the output in an .RDS file.
 #'
-#' @return an condensed version of the MCMC list `IDSM.out` without redundant nodes.
+#' @return a condensed version of the MCMC list `IDSM.out` without redundant nodes.
 #' @export
 #'
 #' @examples
-tidySamples <- function(IDSM.out, save = TRUE){
+#' 
+tidySamples <- function(IDSM.out,
+                        save = TRUE) {
   
   ## Extract number of chains
   n_chains <- length(IDSM.out)

@@ -2,6 +2,7 @@
 .Rproj.user/
 data/Kommuner_2018_WGS84
 data/NorgeKommuner_clipped_kystkontor 
+maps
 *.zip
 
 # History files
@@ -18,10 +19,12 @@ data/NorgeKommuner_clipped_kystkontor
 *.png 
 
 # Shape files
+*.cpg
+*.dbf
+*.prj
 *.shp
+*.shx
 
 # Others
 1b_Data_from_Hønsefuglportalen_wrangling.R
 manuscript
-
-

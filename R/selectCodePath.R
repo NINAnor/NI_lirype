@@ -1,8 +1,11 @@
 #' Select appropriate code file based on toggle values
 #'
-#' @param shareRE logical. If TRUE, temporal random effects are shared across locations.
-#' @param survVarT logical. If TRUE, survival is modeled including among-year variation.
-#' @param addDummyDim logical. If TRUE (default) additional location/area dimension is used.
+#' @param shareRE logical. If TRUE, temporal random effects are shared across
+#' locations.
+#' @param survVarT logical. If TRUE, survival is modeled including among-year
+#' variation.
+#' @param addDummyDim logical. If TRUE (default) additional location/area
+#' dimension is used.
 #'
 #' @return
 #' @export

@@ -1,24 +1,38 @@
 #' Extract and prepare rodent abundance covariate data
 #'
-#' @param duplTransects vector of strings. (parent) EventIDs of transects that are duplicates and need removing from the data
+#' @param duplTransects vector of strings. (parent) EventIDs of transects that
+#' are duplicates and need removing from the data
 #' @param localities string or vector of strings. Names of localities to extract
 #' data for. Either localities or areas must be provided. 
 #' @param areas string or vector of strings. Names of areas to extract
 #' data for. Either localities or areas must be provided.
-#' @param areaAggregation logical. If TRUE, areas are used as smallest spatial unit. If FALSE, locations (within areas) are used as smallest spatial unit.
+#' @param areaAggregation logical. If TRUE, areas are used as smallest spatial
+#' unit. If FALSE, locations (within areas) are used as smallest spatial unit.
 #' @param minYear integer. Earliest year of data to extract.
-#' @param maxYear integer. Latest year of data to extract.  
+#' @param maxYear integer. Latest year of data to extract.
 #'
-#' @return a matrix containing the average number of transects with rodent observations per area and year.
+#' @return a matrix containing the average number of transects with rodent
+#' observations per area and year.
 #' @export
 #'
 #' @examples
+#'      wrangleData_Rodent(duplTransects = duplTransects,
+#'                         areas = areas,
+#'                         areaAggregation = TRUE,
+#'                         minYear = minYear, maxYear = maxYear)
 
-wrangleData_Rodent <- function(duplTransects, localities = NULL, areas = NULL, areaAggregation, minYear, maxYear){
+wrangleData_Rodent <- function(duplTransects,
+                               localities = NULL,
+                               areas = NULL,
+                               areaAggregation,
+                               minYear,
+                               maxYear) {
   
   ## Check if .rds file is available
   if(!file.exists("data/Rodent_data.rds")){
-    stop("Data file (data/Rodent_data.rds) not found. The workflow currently requires this file as it does not yet support extraction of rodent observation data directly from GBIF/Living Norway.")
+    stop("Data file (data/Rodent_data.rds) not found. The workflow currently\n
+         requires this file as it does not yet support extraction of rodent\n
+         observation data directly from GBIF/Living Norway.")
   }
   
   ## Load data from .rds file
@@ -80,7 +94,6 @@ wrangleData_Rodent <- function(duplTransects, localities = NULL, areas = NULL, a
   ## Set up matrix for area-specific data
   rodentAvg <- matrix(NA, nrow = N_sUnits, ncol = length(minYear:maxYear))
 
-  
   for(x in 1:N_sUnits){
     
     ## Subset data (specific area)
@@ -101,5 +114,4 @@ wrangleData_Rodent <- function(duplTransects, localities = NULL, areas = NULL, a
  
   ## Return data
   return(rodentAvg)
-  
 }

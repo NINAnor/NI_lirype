@@ -8,28 +8,37 @@
 #' @param R_perF logical. If TRUE, treats recruitment rate as juvenile per adult female.
 #' If FALSE, treats recruitment rate as juvenile per adult (sum of both sexes).
 #' @param shareRE logical. If TRUE, temporal random effects are shared across locations.
-#' @param survVarT logical. If TRUE, survival is simulated including annual variation.
+#' @param survVarT logical. If TRUE, annual variation in survival is simulated.
 #' @param fitRodentCov logical. If TRUE, rodent covariate on reproduction is included.
-#' @param niter integer. Number of MCMC iterations (default = 25000)
-#' @param nthin integer. Thinning factor (default = 5)
-#' @param nburn integer. Number of iterations to discard as burn-in (default = 5000)
+#' @param niter integer. Number of MCMC iterations (default = 25000) #100000
+#' @param nthin integer. Thinning factor (default = 5) #20
+#' @param nburn integer. Number of iterations to discard as burn-in (default = 5000) #40000
 #' @param nchains integer. Number of chains to run.
 #' @param testRun logical. If TRUE, sets up for a test run with 10 iterations,
 #' no thinning, and no burn-in (default = FALSE)
-#' @param initVals.seed integer. Seed to use for inital value simulation.
+#' @param initVals.seed integer. Seed to use for initial value simulation.
 #'
-#' @return list of list containing all components necessary for running model 
+#' @return list of lists containing all components necessary for running models 
 #' with `nimble::nimbleMCMC()`
 #' @export
 #'
 #' @examples
 
-setupModel <- function(modelCode.path, customDist,
-                       nim.data, nim.constants,
-                       R_perF, shareRE, survVarT, fitRodentCov, addDummyDim = TRUE,
-                       niter = 100000, nthin = 20, nburn = 40000, nchains = 3,
-                       testRun = FALSE, initVals.seed){
-
+setupModel <- function(modelCode.path,
+                       customDist,
+                       nim.data,
+                       nim.constants,
+                       R_perF,
+                       shareRE,
+                       survVarT,
+                       fitRodentCov,
+                       addDummyDim = TRUE,
+                       niter = 25000,
+                       nthin = 5,
+                       nburn = 5000,
+                       nchains = 3,
+                       testRun = FALSE,
+                       initVals.seed) {
   
   ## Catch mismatches between model code name and distribution settings
   if((customDist & (!(grepl('dHN', modelCode.path, fixed = TRUE)) & !(grepl('dHR', modelCode.path, fixed = TRUE)))) |
@@ -40,6 +49,7 @@ setupModel <- function(modelCode.path, customDist,
   ## Load model code
   require('nimble')
   if(customDist){require('nimbleDistance')}
+  #devtools::install_github("scrogster/nimbleDistance", build_vignettes = TRUE, INSTALL_opts = "--no-multiarch")
   source(modelCode.path)
   
   ## Set parameters to monitor
@@ -47,9 +57,8 @@ setupModel <- function(modelCode.path, customDist,
               "R_year", "Mu.R", "h.Mu.R", "h.sigma.R", "sigmaT.R",
               "sigma", "mu.dd", "sigmaT.dd",
               "Density", "N_exp", "N_tot_exp",
+              "S", "Mu.S", "h.Mu.S", "h.sigma.S", "Mu.S1",
               "Mu.D1", "sigma.D",
-              "S", "Mu.S", "h.Mu.S", "h.sigma.S",
-              "Mu.S1", 
               "ratio.JA1")
   
   if(grepl('dHR', modelCode.path, fixed = TRUE)){
