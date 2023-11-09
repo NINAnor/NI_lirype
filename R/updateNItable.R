@@ -92,7 +92,14 @@ updateNItable <- function(
   ind.values$indicatorName[is.na(ind.values$indicatorName)] <- "Lirype"
   ind.values$unitOfMeasurement[is.na(ind.values$unitOfMeasurement)] <- "thousand ind"
   
-  # yet to deal with: datatypeId and datatypeName !!
+  # assign datatypeId and datatypeName to new entries
+  ind.values <- ind.values %>%
+    dplyr::mutate(datatypeId = dplyr::case_when(is.na(verdi) ~ NA,
+                                                !is.na(datatypeId) ~ datatypeId,
+                                                TRUE ~ 3),
+                  datatypeName = dplyr::case_when(is.na(verdi) ~ NA,
+                                                  !is.na(datatypeName) ~ datatypeName,
+                                                  TRUE ~ "Beregnet fra modeller"))
   
   # sort and rename columns
   ind.values <- ind.values %>% dplyr::select("indicatorId", "indicatorName", "areaId.y",
