@@ -35,12 +35,17 @@ downloadData_NIdb <- function(species, indicators, save = FALSE, save_path){
   ## Get token
   NIcalc::getToken(username = UserName_NIdb,  
                    password = Password_NIdb,
-                   #url = "https://www8.nina.no/Naturindeks_test",
                    url = "https://www8.nina.no/NaturindeksNiCalc")
   
   ## Specify indicators for which to download data
   myIndicators <- NIcalc::getIndicators() %>%
     dplyr::right_join(data.frame(name = indicators, species = species), by = 'name')
+  
+  ## Check if user has access to indicator
+  if(is.na(myIndicators$id)){
+    stop("You do not have access to the requested indicator(s). 
+         To request access, contact NINA.")
+  }
   
   ## Retrieve old indicator data from NI database
   oldIndicatorData <- list()
