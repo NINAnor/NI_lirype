@@ -228,18 +228,21 @@ output.data <- estimatePtarmiganAbundance(output = prepared.output)
 # retrieve the currently stored values for Ptarmigan from the Nature Index (NI) database
 species <- c("Lagopus lagopus")
 indicators <- c("Lirype")
-currentPtarmTable <- downloadData_NIdb(species, indicators, save = T, save_path = "data")
+currentPtarmTable <- downloadData_NIdb(species, 
+                                       indicators, 
+                                       save = TRUE, 
+                                       save_path = "data")
 
 # update the values with the results from the population density model for Ptarmigan
 # time interval to update can be specified using the 'min_year' and 'max_year' arguments
 newPtarmTable <- updateNItable(model.est = output.data,
                                cur.table = currentPtarmTable,
-                               save = T,
+                               save = TRUE,
                                save_path = "data",
                                min_year = NULL,
                                max_year = NULL)
 
-# upload the updated table and overwrite existing data -- NB! Not tested yet!
+# upload the updated table and overwrite existing data -- Tested with test database 11/23
 #uploadData_NIdb(species, data_path = "data")
 
 
