@@ -1,4 +1,3 @@
-
 #' Read in and reformat known fate capture-mark-recapture (CMR) data
 #'
 #' @param minYear integer. Earliest year of line transect data used.
@@ -9,6 +8,7 @@
 #' @export
 #'
 #' @examples
+#'     wrangleData_CMR(minYear = minYear)
 
 wrangleData_CMR <- function(minYear){
   

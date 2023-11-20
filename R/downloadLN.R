@@ -1,15 +1,21 @@
 #' Download ptarmigan line transect data from Living Norway Data Portal
 #'
-#' @param datasets character (vector). The name(s) of the dataset to download. Can be any combination of "Fjellstyrene", "Statskog", and "FeFo".
+#' @param datasets character (vector). The name(s) of the dataset to download.
+#' Can be any combination of "Fjellstyrene", "Statskog", and "FeFo".
 #' @param version numeric. Version(s) of the dataset(s) to download. 
 #' @param save logical. If TRUE (default), saves downloaded .zip archive into 
 #' "data" folder. Folder is created if it does not exist yet.
 #'
-#' @return A list of Darwin Core Archives (class DwCArchive, R6) containing line transect 
-#' data for willow ptarmigan (Lagopus lagopus) in Norway. 
+#' @return A list of Darwin Core Archives (class DwCArchive, R6) containing line
+#' transect data for willow ptarmigan (Lagopus lagopus) in Norway. 
 #' @export
 #'
 #' @examples
+#'      downloadLN(
+#'        datasets = c("Fjellstyrene", "Statskog", "FeFo"),
+#'        versions = c(1.7, 1.8, 1.12),
+#'        save = FALSE
+#'      )
 
 downloadLN <- function(datasets, versions, save = TRUE){
   
